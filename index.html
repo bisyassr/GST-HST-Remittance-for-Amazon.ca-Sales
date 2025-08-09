@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Report: Amazon GST/HST Marketplace Facilitator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: A task-oriented dashboard guiding the user from the main conclusion to the legal basis, the operational mechanism (via an interactive flowchart), and finally to the verification methods (via a tabbed report interface). This non-linear structure is designed for quick comprehension and evidence discovery by a CRA official, prioritizing usability over mirroring the source report's linear format. -->
+    <!-- Visualization & Content Choices: 1. Legislative Dates -> Goal: Change -> HTML/CSS Timeline -> Hover interaction -> More engaging than a static table. 2. Responsibility Logic (Table 2) -> Goal: Compare/Organize -> Interactive HTML/JS Flowchart + Chart.js Donut Chart -> Click interaction -> Clearly demonstrates the conditional nature of Amazon's responsibility. 3. Reporting Info (Table 3) -> Goal: Inform/Organize -> JS Tabbed Interface -> Click interaction -> Organizes dense information cleanly. All visuals use HTML/CSS/Canvas. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f9fafb;
+        }
+        .nav-link {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .nav-link:hover, .nav-link.active {
+            color: #1d4ed8;
+            border-bottom-color: #1d4ed8;
+        }
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+        }
+        .tab-button {
+            transition: all 0.3s ease;
+        }
+        .tab-button.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .flow-step {
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        .flow-step.highlight {
+            border-color: #3b82f6;
+            transform: scale(1.05);
+            box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.2);
+        }
+        .flow-arrow {
+            transition: all 0.3s ease;
+            opacity: 0.2;
+        }
+        .flow-arrow.highlight {
+            opacity: 1;
+            color: #3b82f6;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -2.75rem;
+            top: 0.5rem;
+            width: 1rem;
+            height: 1rem;
+            border-radius: 50%;
+            background-color: #60a5fa;
+            border: 3px solid #dbeafe;
+        }
+        .chart-container {
+            position: relative;
+            margin: auto;
+            height: 280px;
+            width: 100%;
+            max-width: 280px;
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <div class="container mx-auto max-w-6xl p-4 sm:p-6 lg:p-8">
+        
+        <header class="text-center mb-12">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-2">GST/HST Remittance for Amazon.ca Sales</h1>
+            <p class="text-lg text-gray-600">An Interactive Explainer for the Canada Revenue Agency</p>
+        </header>
+
+        <div class="bg-white p-6 rounded-xl shadow-md border border-gray-200 mb-12">
+            <h2 class="text-2xl font-bold text-blue-800 mb-3 text-center">Executive Summary</h2>
+            <p class="text-gray-700 leading-relaxed text-center max-w-4xl mx-auto">
+                This interactive report demonstrates that Amazon, operating as a designated Marketplace Facilitator, legally assumes the responsibility for calculating, collecting, and remitting GST/HST on certain domestic sales. This is a direct result of Canadian tax legislation effective **July 1, 2021**. Consequently, tax amounts for these specific transactions were remitted directly by Amazon to the CRA and were not included in the seller's payouts. The seller bears no further remittance obligation for these amounts.
+            </p>
+        </div>
+
+        <nav class="flex justify-center border-b-2 border-gray-200 mb-12 space-x-4 sm:space-x-8">
+            <a data-target="mechanism" class="nav-link active font-semibold text-gray-600 pb-2 border-b-2 border-transparent text-sm sm:text-base">The Core Mechanism</a>
+            <a data-target="timeline" class="nav-link font-semibold text-gray-600 pb-2 border-b-2 border-transparent text-sm sm:text-base">Legal Timeline</a>
+            <a data-target="verification" class="nav-link font-semibold text-gray-600 pb-2 border-b-2 border-transparent text-sm sm:text-base">Verification & Reporting</a>
+            <a data-target="conclusion" class="nav-link font-semibold text-gray-600 pb-2 border-b-2 border-transparent text-sm sm:text-base">Conclusion</a>
+        </nav>
+
+        <main>
+            <section id="mechanism" class="content-section active">
+                 <div class="text-center mb-10">
+                    <h2 class="text-2xl font-bold text-gray-900">How Amazon Handles GST/HST</h2>
+                    <p class="mt-2 text-gray-600 max-w-3xl mx-auto">Amazon's responsibility to handle GST/HST is conditional and depends entirely on the seller's registration status provided in Seller Central. This interactive diagram shows the two possible paths for tax remittance.</p>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-8 items-center">
+                    <div class="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                        <h3 class="font-bold text-lg text-center mb-4">Select a Seller Scenario:</h3>
+                        <div class="flex justify-center space-x-4 mb-6">
+                            <button id="btn-unregistered" class="scenario-btn bg-blue-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600 transition">Seller is NOT GST/HST Registered with Amazon</button>
+                            <button id="btn-registered" class="scenario-btn bg-white text-gray-700 px-4 py-2 rounded-lg shadow border hover:bg-gray-100 transition">Seller IS GST/HST Registered with Amazon</button>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div id="step-start" class="flow-step bg-white p-4 rounded-lg shadow-sm text-center">
+                                <p class="font-semibold">Customer Purchase on Amazon.ca</p>
+                            </div>
+                            <div class="flex justify-center">
+                                <span id="arrow1" class="flow-arrow text-2xl font-bold">&darr;</span>
+                            </div>
+                            <div id="step-check" class="flow-step bg-white p-4 rounded-lg shadow-sm text-center">
+                                <p class="font-semibold">System Check: Is Seller's GST/HST # Registered with Amazon?</p>
+                            </div>
+                            <div class="flex justify-around">
+                                <span id="arrow-no" class="flow-arrow text-2xl font-bold">&darr; <span class="text-sm font-medium">NO</span></span>
+                                <span id="arrow-yes" class="flow-arrow text-2xl font-bold">&darr; <span class="text-sm font-medium">YES</span></span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div id="step-amazon" class="flow-step bg-blue-50 p-4 rounded-lg shadow-sm text-center h-full">
+                                    <p class="font-bold text-blue-800">Amazon is Responsible</p>
+                                    <p class="text-sm text-blue-700 mt-1">Amazon calculates, collects, and remits GST/HST directly to CRA.</p>
+                                </div>
+                                <div id="step-seller" class="flow-step bg-green-50 p-4 rounded-lg shadow-sm text-center h-full">
+                                    <p class="font-bold text-green-800">Seller is Responsible</p>
+                                    <p class="text-sm text-green-700 mt-1">Amazon passes tax to seller. Seller must remit to CRA.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <h3 id="chart-title" class="font-bold text-lg mb-4">Remittance Responsibility</h3>
+                        <div class="chart-container">
+                            <canvas id="responsibilityChart"></canvas>
+                        </div>
+                        <p id="chart-desc" class="mt-4 text-gray-600 px-4">Select a scenario to see who is responsible for remitting the tax.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="timeline" class="content-section">
+                <div class="text-center mb-12">
+                    <h2 class="text-2xl font-bold text-gray-900">Legislative Timeline for Digital Economy Taxation</h2>
+                    <p class="mt-2 text-gray-600 max-w-3xl mx-auto">Amazon's role as a Marketplace Facilitator is a direct response to specific legislative changes by the CRA. This timeline highlights the key effective dates.</p>
+                </div>
+                <div class="relative max-w-2xl mx-auto pl-10 border-l-4 border-blue-200">
+                    <div class="timeline-item mb-10 pl-4">
+                        <h3 class="font-bold text-lg text-blue-800">July 1, 2021</h3>
+                        <p class="text-gray-700 mt-1">New GST/HST legislative measures for digital economy businesses and platform operators become effective. This is the foundational change that legally defines Amazon's role as a "Distribution Platform Operator" and mandates its responsibility for tax collection and remittance in specific scenarios.</p>
+                    </div>
+                    <div class="timeline-item mb-10 pl-4">
+                        <h3 class="font-bold text-lg text-blue-800">April 1, 2021</h3>
+                        <p class="text-gray-700 mt-1">British Columbia begins requiring non-resident vendors to collect PST on cross-border digital services, signaling a broader trend in provincial tax modernization that parallels federal efforts.</p>
+                    </div>
+                    <div class="timeline-item pl-4">
+                        <h3 class="font-bold text-lg text-blue-800">January 1, 2024</h3>
+                        <p class="text-gray-700 mt-1">New rules for GST/HST on short-term rentals provided through digital platforms take effect, further solidifying the legal framework for marketplace facilitators in Canada's digital economy.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="verification" class="content-section">
+                <div class="text-center mb-12">
+                    <h2 class="text-2xl font-bold text-gray-900">Verification Through Amazon Seller Central</h2>
+                    <p class="mt-2 text-gray-600 max-w-3xl mx-auto">Amazon provides specific reports to identify transactions where it has withheld and remitted tax. This allows for a clear and verifiable audit trail.</p>
+                </div>
+
+                <div class="max-w-4xl mx-auto">
+                    <div class="flex flex-wrap justify-center mb-6 border-b border-gray-200">
+                        <button data-tab="tab1" class="tab-button active px-4 py-2 font-medium text-sm sm:text-base -mb-px border-b-2 border-transparent">Payments & Orders</button>
+                        <button data-tab="tab2" class="tab-button px-4 py-2 font-medium text-sm sm:text-base -mb-px border-b-2 border-transparent">Tax Withholding Report</button>
+                        <button data-tab="tab3" class="tab-button px-4 py-2 font-medium text-sm sm:text-base -mb-px border-b-2 border-transparent">Transaction Report</button>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                        <div id="tab1" class="tab-content">
+                            <h3 class="font-bold text-lg text-gray-800 mb-2">Order Details & Payments Reporting</h3>
+                            <p class="text-gray-600 mb-4">This is the most direct place to see the tax deduction on a per-order basis.</p>
+                            <ul class="list-disc list-inside space-y-2 text-gray-700">
+                                <li><strong class="font-semibold">Location:</strong> Seller Central > Orders > Manage Orders / Reports > Payments</li>
+                                <li><strong class="font-semibold">Key Identifier:</strong> Look for line items labeled <span class="bg-yellow-100 text-yellow-800 font-mono text-sm px-1 rounded">"Marketplace Withheld Tax"</span> or <span class="bg-yellow-100 text-yellow-800 font-mono text-sm px-1 rounded">"Marketplace Facilitator Tax"</span>.</li>
+                                <li><strong class="font-semibold">Meaning:</strong> These labels explicitly represent the MTC amounts deducted from an order, confirming Amazon's obligation to remit. The funds are withheld from the seller's payout for this purpose.</li>
+                            </ul>
+                        </div>
+                        <div id="tab2" class="tab-content hidden">
+                            <h3 class="font-bold text-lg text-gray-800 mb-2">GST/HST Tax Withholding Report</h3>
+                            <p class="text-gray-600 mb-4">A summary report specifically designed for tracking tax withheld by Amazon.</p>
+                            <ul class="list-disc list-inside space-y-2 text-gray-700">
+                                <li><strong class="font-semibold">Location:</strong> Seller Central > Reports > Tax Documents > Tax Withheld By Amazon</li>
+                                <li><strong class="font-semibold">Key Identifier:</strong> The report itself is titled "GST/HST Tax Withholding report".</li>
+                                <li><strong class="font-semibold">Meaning:</strong> Provides a summary for a specified date range of total sales, taxable sales, GST collected, and the total tax withheld by Amazon for direct remittance.</li>
+                            </ul>
+                        </div>
+                        <div id="tab3" class="tab-content hidden">
+                            <h3 class="font-bold text-lg text-gray-800 mb-2">Amazon Transaction Report</h3>
+                            <p class="text-gray-600 mb-4">The most granular report for detailed reconciliation of all financial activity.</p>
+                            <ul class="list-disc list-inside space-y-2 text-gray-700">
+                                <li><strong class="font-semibold">Location:</strong> Seller Central > Reports > Fulfillment > Sales reports</li>
+                                <li><strong class="font-semibold">Key Identifier:</strong> Within the report columns, tax collected is itemized, explicitly distinguishing between MTC (Marketplace Facilitator) and seller-collected amounts.</li>
+                                <li><strong class="font-semibold">Meaning:</strong> This detailed, transaction-level data allows for precise reconciliation, separating sales where Amazon remitted tax from sales where the seller retains the remittance responsibility.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="conclusion" class="content-section">
+                <div class="text-center mb-12">
+                    <h2 class="text-2xl font-bold text-gray-900">Conclusion & Recommendation</h2>
+                     <p class="mt-2 text-gray-600 max-w-3xl mx-auto">The evidence confirms a clear shift in tax liability for specific transactions from the seller to the marketplace platform, as mandated by Canadian law.</p>
+                </div>
+                <div class="max-w-4xl mx-auto bg-white p-8 rounded-xl shadow-md border border-gray-200">
+                    <h3 class="font-bold text-xl text-blue-800 mb-4">Recommendation to the Canada Revenue Agency</h3>
+                    <p class="text-gray-700 leading-relaxed mb-6">The CRA is respectfully requested to acknowledge that for all transactions identified in Amazon's reports with a "Marketplace Withheld Tax" deduction, the GST/HST has been duly collected and remitted by Amazon as the designated Marketplace Facilitator. The seller has fulfilled their obligation for these amounts and should not be required to remit them again. Verification for these transactions should be directed towards Amazon's remittance records.</p>
+                    
+                    <div class="border-t border-gray-200 pt-6">
+                        <h3 class="font-bold text-xl text-gray-800 mb-4">Key Takeaways for Compliance</h3>
+                        <ul class="space-y-4">
+                            <li class="flex items-start">
+                                <span class="text-green-500 mr-3 mt-1">&#10004;</span>
+                                <div>
+                                    <h4 class="font-semibold">Amazon is the Remitter</h4>
+                                    <p class="text-gray-600">For sales to Canadian customers where the seller has not provided a GST/HST number, Amazon is legally obligated to collect and remit the tax.</p>
+                                </div>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="text-green-500 mr-3 mt-1">&#10004;</span>
+                                <div>
+                                    <h4 class="font-semibold">Seller Payouts are Correct</h4>
+                                    <p class="text-gray-600">The non-receipt of tax funds in seller payouts is the correct and intended outcome of this system, as the funds are withheld by Amazon for direct remittance.</p>
+                                </div>
+                            </li>
+                             <li class="flex items-start">
+                                <span class="text-green-500 mr-3 mt-1">&#10004;</span>
+                                <div>
+                                    <h4 class="font-semibold">Verification is Possible</h4>
+                                    <p class="text-gray-600">Amazon's reporting system provides a clear audit trail to identify these "Marketplace Withheld Tax" transactions, confirming the shift in remittance responsibility.</p>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const navLinks = document.querySelectorAll('.nav-link');
+            const contentSections = document.querySelectorAll('.content-section');
+
+            navLinks.forEach(link => {
+                link.addEventListener('click', () => {
+                    const targetId = link.getAttribute('data-target');
+                    
+                    navLinks.forEach(navLink => navLink.classList.remove('active'));
+                    contentSections.forEach(section => section.classList.remove('active'));
+                    
+                    link.classList.add('active');
+                    document.getElementById(targetId).classList.add('active');
+                });
+            });
+
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const tabId = button.getAttribute('data-tab');
+
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    tabContents.forEach(content => content.classList.add('hidden'));
+
+                    button.classList.add('active');
+                    document.getElementById(tabId).classList.remove('hidden');
+                });
+            });
+            
+            const scenarioBtns = document.querySelectorAll('.scenario-btn');
+            const flowSteps = document.querySelectorAll('.flow-step');
+            const flowArrows = document.querySelectorAll('.flow-arrow');
+            const chartTitle = document.getElementById('chart-title');
+            const chartDesc = document.getElementById('chart-desc');
+
+            let responsibilityChart;
+
+            function createChart(data, colors, labels) {
+                const ctx = document.getElementById('responsibilityChart').getContext('2d');
+                if (responsibilityChart) {
+                    responsibilityChart.destroy();
+                }
+                responsibilityChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: colors,
+                            borderColor: '#f9fafb',
+                            borderWidth: 4,
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '70%',
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                enabled: true,
+                                callbacks: {
+                                    label: function(context) {
+                                        return `${context.label}: ${context.raw}%`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            function highlightPath(path) {
+                flowSteps.forEach(step => step.classList.remove('highlight'));
+                flowArrows.forEach(arrow => arrow.classList.remove('highlight'));
+                
+                document.getElementById('step-start').classList.add('highlight');
+                document.getElementById('arrow1').classList.add('highlight');
+                document.getElementById('step-check').classList.add('highlight');
+
+                if (path === 'unregistered') {
+                    document.getElementById('arrow-no').classList.add('highlight');
+                    document.getElementById('step-amazon').classList.add('highlight');
+                    chartTitle.textContent = "Scenario: Seller NOT Registered with Amazon";
+                    chartDesc.textContent = "In this case, Amazon is 100% responsible for calculating, collecting, and remitting the GST/HST directly to the CRA.";
+                    createChart([100], ['#3b82f6'], ['Amazon is Responsible']);
+                } else if (path === 'registered') {
+                    document.getElementById('arrow-yes').classList.add('highlight');
+                    document.getElementById('step-seller').classList.add('highlight');
+                    chartTitle.textContent = "Scenario: Seller IS Registered with Amazon";
+                    chartDesc.textContent = "In this case, the Seller is 100% responsible. Amazon passes the collected tax to the seller, who must then remit it to the CRA.";
+                    createChart([100], ['#22c55e'], ['Seller is Responsible']);
+                }
+            }
+            
+            scenarioBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    scenarioBtns.forEach(b => {
+                        b.classList.remove('bg-blue-500', 'text-white');
+                        b.classList.add('bg-white', 'text-gray-700', 'border');
+                    });
+                    e.target.classList.add('bg-blue-500', 'text-white');
+                    e.target.classList.remove('bg-white', 'text-gray-700', 'border');
+
+                    if(e.target.id === 'btn-unregistered') {
+                        highlightPath('unregistered');
+                    } else {
+                        highlightPath('registered');
+                    }
+                });
+            });
+
+            document.getElementById('btn-unregistered').click();
+        });
+    </script>
+
+</body>
+</html>
